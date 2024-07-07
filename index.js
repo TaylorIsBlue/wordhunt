@@ -1,177 +1,176 @@
-const gridItems = document.querySelectorAll(".grid-item");
-let isSelecting = false;
-let cache = new Map();
-let debounceTimer;
-let isFirstSelection = true;
-let currentWord = "";
-let timeLeft = 60;
-let timerId = null;
-let score = 0;
-let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
-document.addEventListener("DOMContentLoaded", () => {
-    shuffleLetters();
-    displayLeaderboard();
-    setupEventListeners();
-});
+class WordGame {
+	constructor() {
+		this.gridItems = document.querySelectorAll(".grid-item");
+		this.gridContainer = document.querySelector(".grid-container");
+		this.messageElement = document.getElementById("message");
+		this.isSelecting = false;
+		this.isFirstSelection = true;
+		this.cache = new Map();
+		this.currentWord = "";
+		this.timeLeft = 60;
+		this.timerId = null;
+		this.score = 0;
+		this.leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+		this.shuffleLetters();
+		this.setupEventListeners();
+		this.displayLeaderboard();
+	}
 
-function setupEventListeners() {
-    const gridContainer = document.querySelector('.grid-container');
+	setupEventListeners() {
+		this.gridContainer.addEventListener("mousedown", (e) =>
+			this.handleMouseDown(e)
+		);
+		this.gridContainer.addEventListener("mouseover", (e) =>
+			this.handleMouseOver(e)
+		);
+		document.addEventListener("mouseup", () => this.handleMouseUp());
+	}
 
-    gridContainer.addEventListener("mousedown", handleMouseDown);
-    gridContainer.addEventListener("mouseover", handleMouseOver);
-    document.addEventListener("mouseup", handleMouseUp);
-}
+	handleMouseDown(e) {
+		if (this.isFirstSelection) {
+			this.startNewRound();
+			this.isFirstSelection = false;
+		}
+		this.isSelecting = true;
+		const item = e.target.closest(".grid-item");
+		if (item) {
+			if (!item.classList.contains("selected")) {
+				item.classList.add("selected");
+				this.currentWord += item.textContent;
+			}
+		}
+	}
 
-function handleMouseDown(e) {
-    const item = e.target.closest('.grid-item');
-    if (item) handleSelectionStart(item);
-}
+	handleMouseOver(e) {
+		const item = e.target.closest(".grid-item");
+		if (item && this.isSelecting && !item.classList.contains("selected")) {
+			item.classList.add("selected");
+			this.currentWord += item.textContent;
+		}
+	}
 
-function handleMouseOver(e) {
-    const item = e.target.closest('.grid-item');
-    if (item && isSelecting) handleSelectionContinue(item);
-}
+	handleMouseUp() {
+		if (this.isSelecting) {
+			this.isSelecting = false;
+			this.checkWordScore(this.currentWord);
+			this.resetSelection();
+		}
+	}
 
-function handleMouseUp() {
-    if (isSelecting) handleSelectionEnd();
-}
+	startNewRound() {
+		this.startTimer();
+		this.resetSelection();
+	}
 
-function handleSelectionStart(item) {
-    if (isFirstSelection) {
-        startNewRound();
-        isFirstSelection = false;
-    }
-    isSelecting = true;
-    selectItem(item);
-}
+	endGame() {
+		clearInterval(this.timerId);
+		this.isSelecting = false;
+		this.isFirstSelection = true;
+		alert(`Time's up! Your final score is: ${this.score}`);
+		this.updateLeaderboard(this.score);
+		this.displayLeaderboard();
+		this.score = 0;
+	}
 
-function handleSelectionContinue(item) {
-    if (!item.classList.contains("selected")) selectItem(item);
-}
+	resetSelection() {
+		this.gridItems.forEach((item) => item.classList.remove("selected"));
+		this.currentWord = "";
+	}
 
-function handleSelectionEnd() {
-    isSelecting = false;
-    checkWordScore(currentWord);
-    resetSelection();
-}
+	updateLeaderboard(newScore) {
+		this.leaderboard.push(newScore);
+		this.leaderboard.sort((a, b) => b - a);
+		this.leaderboard = this.leaderboard.slice(0, 3);
+		localStorage.setItem("leaderboard", JSON.stringify(this.leaderboard));
+	}
 
-function selectItem(item) {
-    item.classList.add("selected");
-    currentWord += item.textContent;
-}
-
-function startNewRound() {
-    startTimer();
-    resetSelection();
-    shuffleLetters();
-}
-
-function endGame() {
-    clearInterval(timerId);
-    isSelecting = false;
-    isFirstSelection = true;
-    alert(`Time's up! Your final score is: ${score}`);
-    updateLeaderboard(score);
-    displayLeaderboard();
-    score = 0;
-}
-
-function resetSelection() {
-    gridItems.forEach(item => item.classList.remove("selected"));
-    currentWord = "";
-}
-
-function updateLeaderboard(newScore) {
-    leaderboard.push(newScore);
-    leaderboard.sort((a, b) => b - a);
-    leaderboard = leaderboard.slice(0, 5);
-    localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-}
-
-function displayLeaderboard() {
-    const leaderboardElement = document.getElementById("leaderboard");
-    leaderboardElement.innerHTML = `<h2>Leaderboard</h2>${leaderboard.map((score, index) => `<p>${index + 1}. Score: ${score}</p>`).join("")}`;
-}
-
-function updateScoreDisplay() {
-    document.getElementById("score").textContent = `Score: ${score}`;
-}
-
-function startTimer() {
-    timeLeft = 60;
-    updateTimerDisplay();
-
-    timerId = setInterval(() => {
-        timeLeft--;
-        updateTimerDisplay();
-        if (timeLeft <= 0) endGame();
-    }, 1000);
-}
-
-function updateTimerDisplay() {
-    document.getElementById('timer').textContent = `Time Left: ${timeLeft}s`;
-}
-
-async function checkWordValidity(word) {
-    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
-    try {
-        const response = await fetch(url);
-        if (response.status === 200) {
-            const data = await response.json();
-            return data[0]?.word.toLowerCase() === word.toLowerCase();
-        }
-        return false;
-    } catch (error) {
-        console.error("Failed to validate word:", error);
-        return false;
-    }
-}
-
-async function checkWordScore(word) {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(async () => {
-        if (word.length < 3) {
-            displayMessage(`${word} is too short.`, "red");
-            return;
-        }
-        if (cache.has(word)) {
-            displayValidity(word, cache.get(word));
-            return;
-        }
-
-        let isValid = await checkWordValidity(word);
-        cache.set(word, isValid);
-        displayValidity(word, isValid);
-    }, 300);
-}
-
-function displayValidity(word, isValid) {
-    if (isValid) {
-        displayMessage(`${word} is a valid word!`, "green");
-        score += word.length * 100;
-        updateScoreDisplay();
-    } else {
-        displayMessage(`${word} is not a valid word.`, "red");
-    }
-}
-
-function displayMessage(message, color) {
-    const messageElement = document.getElementById("message");
-    messageElement.textContent = message;
-    messageElement.style.color = color;
-}
-
-function shuffleLetters() {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let letters = Array.from(gridItems).map(c => alphabet[Math.floor(Math.random() * alphabet.length)]);
+	displayLeaderboard() {
+		const leaderboardElement = document.getElementById("leaderboard");
     
-    for (let i = letters.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [letters[i], letters[j]] = [letters[j], letters[i]];
+    if (this.leaderboard.length === 0) { 
+      leaderboardElement.style.display = "none"; 
+    } else {
+		leaderboardElement.innerHTML = `<h2>Leaderboard</h2>${this.leaderboard
+			.map((score, index) => `<p>${index + 1}. Score: ${score}</p>`)
+			.join("")}`;
     }
+	}
 
-    gridItems.forEach((cell, index) => {
-        cell.textContent = letters[index];
-    });
+	startTimer() {
+		this.timeLeft = 60;
+		this.updateTimerDisplay();
+		this.timerId = setInterval(() => {
+			this.timeLeft--;
+			this.updateTimerDisplay();
+			if (this.timeLeft <= 0) this.endGame();
+		}, 1000);
+	}
+
+	updateTimerDisplay() {
+		document.getElementById(
+			"timer"
+		).textContent = `Time Left: ${this.timeLeft}s`;
+	}
+
+	async checkWordValidity(word) {
+		const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
+		try {
+			const response = await fetch(url);
+			return (
+				response.status === 200 &&
+				(await response.json())[0]?.word.toLowerCase() === word.toLowerCase()
+			);
+		} catch (error) {
+			console.error("Failed to validate word:", error);
+			return false;
+		}
+	}
+
+	async checkWordScore(word) {
+		clearTimeout(this.debounceTimer);
+		this.debounceTimer = setTimeout(async () => {
+			if (word.length < 3) {
+				this.displayMessage(`${word} is too short.`, "red");
+				return;
+			}
+			if (this.cache.has(word)) {
+				return this.displayValidity(word, false);
+			}
+			let isValid = await this.checkWordValidity(word);
+			this.cache.set(word, isValid);
+			this.displayValidity(word, isValid);
+		}, 300);
+	}
+
+	displayValidity(word, isValid) {
+		if (isValid) {
+			this.displayMessage(`${word} is a valid word!`, "green");
+			this.score += word.length * 100;
+			document.getElementById("score").textContent = `Score: ${this.score}`;
+		} else {
+			this.displayMessage(`${word} is not a valid word.`, "red");
+		}
+	}
+
+	displayMessage(message, color) {
+		this.messageElement.textContent = message;
+		this.messageElement.style.color = color;
+	}
+
+	shuffleLetters() {
+		const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		let letters = Array.from(this.gridItems).map(
+			() => alphabet[Math.floor(Math.random() * alphabet.length)]
+		);
+		for (let i = letters.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[letters[i], letters[j]] = [letters[j], letters[i]];
+		}
+		this.gridItems.forEach((cell, index) => {
+			cell.textContent = letters[index];
+		});
+	}
 }
+
+document.addEventListener("DOMContentLoaded", () => new WordGame());

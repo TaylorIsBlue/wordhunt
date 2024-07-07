@@ -1,54 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Word Hunt Game</title>
-		<style>
-			.grid-container {
-				display: grid;
-				grid-template-columns: repeat(3, 1fr);
-				gap: 10px;
-				width: 300px;
-				margin: auto;
-			}
-			.grid-item {
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				height: 100px;
-				background-color: #f0f0f0;
-				cursor: pointer;
-				user-select: none;
-			}
-			.selected {
-				background-color: #add8e6;
-			}
-			#message {
-				text-align: center;
-				margin-top: 20px;
-				font-size: 18px;
-			}
-		</style>
-	</head>
-	<body>
-		<div id="message"></div>
-		<!-- Message display element -->
-		<div id="timer">Time: 60</div>
-		<div id="score">Score: 0</div>
-		<div id="leaderboard">Leaderboard</div>
-		<div class="grid-container">
-			<button class="grid-item" id="btn1">A</button>
-			<button class="grid-item" id="btn2">B</button>
-			<button class="grid-item" id="btn3">C</button>
-			<button class="grid-item" id="btn4">D</button>
-			<button class="grid-item" id="btn5">E</button>
-			<button class="grid-item" id="btn6">F</button>
-			<button class="grid-item" id="btn7">G</button>
-			<button class="grid-item" id="btn8">H</button>
-			<button class="grid-item" id="btn9">I</button>
-		</div>
-
-		<script src="index.js"/>
-	</body>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Word Hunt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f7f7f7;
+            margin: 0;
+            height: 100vh;
+            color: #333;
+        }
+        #message, #timer, #score, #leaderboard {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 320px;
+            margin: 20px auto;
+        }
+        .grid-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            background-color: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 1.5em;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .grid-item:hover {
+            transform: scale(1.05);
+        }
+        .selected {
+            background-color: #add8e6;
+        }
+    </style>
+</head>
+<body>
+    <div id="message">Word Hunt Game</div>
+    <div id="timer">Time: 60</div>
+    <div id="score">Score: 0</div>
+    <div id="leaderboard">Leaderboard</div>
+    <div class="grid-container">
+        <button class="grid-item" id="btn1">A</button>
+        <button class="grid-item" id="btn2">B</button>
+        <button class="grid-item" id="btn3">C</button>
+        <button class="grid-item" id="btn4">D</button>
+        <button class="grid-item" id="btn5">E</button>
+        <button class="grid-item" id="btn6">F</button>
+        <button class="grid-item" id="btn7">G</button>
+        <button class="grid-item" id="btn8">H</button>
+        <button class="grid-item" id="btn9">I</button>
+    </div>
+    <script src="index.js"></script>
+</body>
 </html>
