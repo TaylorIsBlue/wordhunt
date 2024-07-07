@@ -33,6 +33,7 @@ class WordGame {
 			this.isFirstSelection = false;
 		}
 		this.isSelecting = true;
+    
 		const item = e.target.closest(".grid-item");
 		if (item) {
 			if (!item.classList.contains("selected")) {
@@ -134,7 +135,7 @@ class WordGame {
 				this.displayMessage(`${word} is too short.`, "red");
 				return;
 			}
-			if (this.cache.has(word)) {
+			if (this.cache.has(word) && this.cache.get(word)) {
 				return this.displayValidity(word, false);
 			}
 			let isValid = await this.checkWordValidity(word);
