@@ -135,8 +135,8 @@ class WordGame {
 				this.displayMessage(`${word} is too short.`, "red");
 				return;
 			}
-			if (this.cache.has(word) && this.cache.get(word)) {
-				return this.displayValidity(word, false);
+			if (this.cache.has(word)) {
+				return this.displayValidity(word, !this.cache.has(word));
 			}
 			let isValid = await this.checkWordValidity(word);
 			this.cache.set(word, isValid);
